@@ -9,4 +9,8 @@ Tags:
   - Alibaba fc
 Category: 基础云服务
 Commands:
-  metrics: 监控组建
+  publish: 发布版本/别名
+  unpublish: 下线版本/别名
+Properties:
+  Region:
+    Description: 地域
