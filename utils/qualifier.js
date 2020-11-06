@@ -1,7 +1,7 @@
 'use strict'
 
 const Client = require('./client');
-const Logger = require('../logger');
+const Logger = require('./logger');
 
 
 class Qualifier extends Client {
@@ -19,7 +19,7 @@ class Qualifier extends Client {
     }
   }
 
-  publishVersion (serviceName, description) {
+  async publishVersion (serviceName, description) {
     try {
       this.logger.info('Publish version.');
       const { data } = await this.fcClient.publishVersion(serviceName, description);
@@ -62,21 +62,43 @@ class Qualifier extends Client {
     }
   }
 
-  publishAlias (serviceName, parameters) {
+  async publishAlias (serviceName, parameters) {
     const { n, name, v, versionId, d, description, gv, w } = parameters;
-    const name = n || name;
+    const aliasName = n || name;
     const version = `${v || versionId}`;
 
     const parames = {
       description: d || description,
-      additionalVersionWeight: gv && w ? { gv: w / 100 } : {}
+      additionalVersionWeight: gv && w ? { [gv]: w / 100 } : {}
     };
 
-    const alias = await this.findAlias(serviceName, name);
+    const alias = await this.findAlias(serviceName, aliasName);
     if (alias) {
-      return await this.updateAlias(name, version, parames, serviceName);
+      return await this.updateAlias(aliasName, version, parames, serviceName);
     } else {
-      return await this.createAlias(name, version, parames, serviceName);
+      return await this.createAlias(aliasName, version, parames, serviceName);
+    }
+  }
+
+  async deleteVersion (serviceName, versionId) {
+    try {
+      this.logger.info(`Deleting version: ${versionId}`);
+      await this.fcClient.deleteVersion(serviceName, versionId);
+      this.logger.success(`Delete version successfully: ${versionId}`);
+      return versionId;
+    } catch (ex) {
+      this.throwError(ex);
+    }
+  }
+
+  async deleteAlias (serviceName, aliasName) {
+    try {
+      this.logger.info(`Delete alias: ${aliasName}`);
+      await this.fcClient.deleteAlias(serviceName, aliasName);
+      this.logger.success(`Delete alias successfully: ${aliasName}`);
+      return aliasName;
+    } catch (ex) {
+      this.throwError(ex);
     }
   }
 }
